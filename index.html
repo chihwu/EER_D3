@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.7/d3.min.js"></script>
+
+	</head>
+
+	<body>
+		<div id="chart-area" style="border: 1px solid black;"></div>
+
+		<script>
+			var areas = ['low', 'medium', 'high'];
+			var percentiles = [33, 33, 33];
+			var statsResult = 65;
+			var tickValues = [0, 50, 100];
+			var legend = ["Expected Decision\nOutcome Impact\n99th% Percentile"];
+			var tooltipText = ["Maximum\nTolerable Risk: 7", "Maximum\nAcceptable Risk: 3"]
+
+			var color = d3.scaleOrdinal()
+							.domain(areas)
+							.range(d3.schemeCategory10);
+
+			var margin = { top: 0, right: 50, bottom: 70, left: 50 };
+
+			var width = 400 - margin.left - margin.right;
+			var height = 350 - margin.top - margin.bottom;
+
+			var chartWidth = 70;
+
+			arrSum = function(arr){
+				return arr.reduce(function(a,b){
+					return a + b
+					}, 0);
+			}
+
+			var y = d3.scaleLinear()
+						.domain([0, arrSum(percentiles)])
+						.range([0, height]);
+
+			var g = d3.select("#chart-area")
+						.append('svg')
+						.attr("width", width + margin.left + margin.right)
+						.attr("height", height + margin.top + margin.bottom)
+						.append("g")
+						.attr("transform", "translate(0, 10)");
+
+			var yAxisCall = d3.axisLeft(y)
+								.tickValues(tickValues)
+								.tickFormat(function(d, i) {
+									return d; 
+								});
+			g.append("g")
+				.attr('class', 'y-axis')
+				.attr('transform', 'translate(50, 0)')
+				.call(yAxisCall);
+
+			var rects = g.selectAll("rect")
+							.data(percentiles);
+
+			rects.enter()
+					.append("rect")
+					.attr("x", margin.left)
+					.attr("y", function(d, i) {
+
+						var y_offset = 0;
+						for (var c = 0; c < i; c++) {
+							y_offset += y(percentiles[c]);
+						}
+
+						return y_offset;
+					})
+					.attr("width", chartWidth)
+					.attr("height", function(d, i) {
+						// console.log(i);
+						return y(d);
+					})
+					.attr("fill", function(d, i) {
+						// console.log(areas[i]);
+						return color(areas[i]);
+					});
+
+			var valueIndicatorWidth = 20;
+			var rect4 = g.append("rect")
+						.attr("x", margin.left + (chartWidth - valueIndicatorWidth)/2)
+						.attr("y", height - y(statsResult))
+						.attr("width", valueIndicatorWidth)
+						.attr("height", y(statsResult))
+						.attr("fill", "white")
+						.attr("stroke", "grey")
+						.attr("stroke-width", 1);
+
+			var legend = g.append("g")
+							.attr('transform', 'translate(80, ' + ( height + 5 ) + ')')
+							.selectAll("text")
+							.data(legend)
+							.enter()
+							.append("text")
+							.attr("text-anchor", "middle")
+							.selectAll("tspan.text")
+							.data(function(d) {
+								return d.split('\n');
+							})
+							.enter()
+							.append("tspan")
+							.text(function(d) {
+								// console.log(d);
+								return d;
+							})
+							.attr("x", 0)
+							.attr("dx", 10)
+							.attr("dy", 18);
+
+			var tooltipHeight = 60;
+
+			for (var index = 0; index < tooltipText.length; index++) {
+				var y_offset = 0;
+				for (var c = 0; c <= index; c++) {
+					y_offset += y(percentiles[c]);
+				}
+
+				var tooltipGroup = g.append("g")
+								.attr('transform', 'translate(' + (margin.left + chartWidth) + ", " + (y_offset - (tooltipHeight /2)) + ')');
+
+				tooltipGroup.append("line")
+							.attr("x1", 0)
+							.attr("y1",  (tooltipHeight /2))
+							.attr("x2", 15)
+							.attr("y2",  (tooltipHeight /2))
+							.attr("stroke", "black")
+							.attr("stroke-width", 2);
+
+				tooltipGroup.append("rect")
+							.attr("x", 15)
+							.attr("rx", 25)
+							.attr("ry", 25)
+							.attr("width", 150)
+							.attr("height", tooltipHeight)
+							.attr("style", "fill:white;stroke:black;stroke-width:1;opacity:0.6");
+
+				tooltipGroup.selectAll("text")
+							.data(tooltipText)
+							.enter()
+							.append("text")
+							.attr("x", 0)
+							.attr("y", 8)
+							.attr("font-size", "14px")
+							.attr("fill", "black")
+							.attr("text-anchor", "middle")
+							.selectAll("tspan.text")
+							.data(function(d, i) {
+								if (i == index) {
+									return d.split('\n');
+								}
+								return [];
+							})
+							.enter()
+							.append("tspan")
+							.text(function(d, i) {
+								return d;
+							})
+							.attr("x", 80)
+							.attr("dx", 10)
+							.attr("dy", 18);
+			}
+			
+
+		</script>
+	</body>
+</html>
