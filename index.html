@@ -15,10 +15,9 @@
 			var tickValues = [0, 50, 100];
 			var legend = ["Expected Decision\nOutcome Impact\n99th% Percentile"];
 			var tooltipText = ["Maximum\nTolerable Risk: 7", "Maximum\nAcceptable Risk: 3"]
-
 			var color = d3.scaleOrdinal()
 							.domain(areas)
-							.range(d3.schemeCategory10);
+							.range(["#a20000", "#e87a05", "#1c7c02"]);
 
 			var margin = { top: 0, right: 50, bottom: 70, left: 50 };
 
