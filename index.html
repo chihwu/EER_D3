@@ -6,25 +6,28 @@
 	</head>
 
 	<body>
-		<div id="chart-area" style="border: 1px solid black;"></div>
+		<div id="chart-area" style="border: 1px solid black; width: 400px; height: 350px; border: 1px solid black;"></div>
 
 		<script>
+			var containerWidth = 400;
+			var containerHeight = 350;
+
 			var areas = ['low', 'medium', 'high'];
 			var percentiles = [33, 33, 33];
 			var statsResult = 65;
 			var tickValues = [0, 50, 100];
 			var legend = ["Expected Decision\nOutcome Impact\n99th% Percentile"];
-			var tooltipText = ["Maximum\nTolerable Risk: 7", "Maximum\nAcceptable Risk: 3"]
-			var color = d3.scaleOrdinal()
-							.domain(areas)
-							.range(["#a20000", "#e87a05", "#1c7c02"]);
+			var tooltipText = ["Maximum\nAcceptable Risk: 3", "Maximum\nTolerable Risk: 7"]
+
 
 			var margin = { top: 0, right: 50, bottom: 70, left: 50 };
 
-			var width = 400 - margin.left - margin.right;
-			var height = 350 - margin.top - margin.bottom;
+			var width = containerWidth - margin.left - margin.right;
+			var height = containerHeight - margin.top - margin.bottom;
 
-			var chartWidth = 70;
+			var color = d3.scaleOrdinal()
+							.domain(areas)
+							.range(["#1c7c02", "#e87a05", "#a20000"]);
 
 			arrSum = function(arr){
 				return arr.reduce(function(a,b){
@@ -34,7 +37,9 @@
 
 			var y = d3.scaleLinear()
 						.domain([0, arrSum(percentiles)])
-						.range([0, height]);
+						.range([height, 0]);
+
+			var chartWidth = 70;
 
 			var g = d3.select("#chart-area")
 						.append('svg')
@@ -62,28 +67,27 @@
 					.attr("y", function(d, i) {
 
 						var y_offset = 0;
-						for (var c = 0; c < i; c++) {
-							y_offset += y(percentiles[c]);
+						for (var c = 0; c <= i; c++) {
+							y_offset += percentiles[c];
 						}
 
-						return y_offset;
+						return y(y_offset);
 					})
 					.attr("width", chartWidth)
 					.attr("height", function(d, i) {
-						// console.log(i);
-						return y(d);
+
+						return height - y(d);
 					})
 					.attr("fill", function(d, i) {
-						// console.log(areas[i]);
 						return color(areas[i]);
 					});
 
 			var valueIndicatorWidth = 20;
 			var rect4 = g.append("rect")
 						.attr("x", margin.left + (chartWidth - valueIndicatorWidth)/2)
-						.attr("y", height - y(statsResult))
+						.attr("y", y(statsResult))
 						.attr("width", valueIndicatorWidth)
-						.attr("height", y(statsResult))
+						.attr("height", height - y(statsResult))
 						.attr("fill", "white")
 						.attr("stroke", "grey")
 						.attr("stroke-width", 1);
@@ -114,8 +118,10 @@
 			for (var index = 0; index < tooltipText.length; index++) {
 				var y_offset = 0;
 				for (var c = 0; c <= index; c++) {
-					y_offset += y(percentiles[c]);
+					y_offset += percentiles[c];
 				}
+
+				y_offset = y(y_offset);
 
 				var tooltipGroup = g.append("g")
 								.attr('transform', 'translate(' + (margin.left + chartWidth) + ", " + (y_offset - (tooltipHeight /2)) + ')');
